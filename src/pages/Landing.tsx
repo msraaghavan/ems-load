@@ -124,7 +124,7 @@ const Landing = () => {
 
           <div className="pt-12 flex flex-col sm:flex-row gap-4 justify-center">
             <Button
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/auth")}
               size="lg"
               className="font-montserrat font-light tracking-wide group"
             >
@@ -132,12 +132,12 @@ const Landing = () => {
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
             <Button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/auth")}
               variant="outline"
               size="lg"
               className="font-montserrat font-light tracking-wide"
             >
-              View Demo
+              Sign In
             </Button>
           </div>
         </div>
