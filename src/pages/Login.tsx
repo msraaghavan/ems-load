@@ -24,26 +24,26 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-accent flex items-center justify-center mx-auto">
-            <Building2 className="w-10 h-10 text-accent-foreground" />
+      <div className="w-full max-w-md space-y-8 animate-fade-in">
+        <div className="text-center space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+            <Building2 className="w-10 h-10 text-primary" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">Welcome Back</h1>
-            <p className="text-muted-foreground mt-2">Sign in to your EMS account</p>
+            <h1 className="text-4xl font-extralight tracking-wider">ELEVATE</h1>
+            <p className="text-muted-foreground mt-3 font-light tracking-wide">Sign in to your account</p>
           </div>
         </div>
 
-        <Card className="border-2">
-          <CardHeader>
-            <CardTitle>Sign In</CardTitle>
-            <CardDescription>Choose your role and enter your credentials</CardDescription>
+        <Card className="border shadow-lg">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-light tracking-wide">Access Portal</CardTitle>
+            <CardDescription className="font-light">Choose your role and enter credentials</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-6">
               <Tabs value={role} onValueChange={(value) => setRole(value as UserRole)} className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-4 font-light">
                   <TabsTrigger value="employee">Employee</TabsTrigger>
                   <TabsTrigger value="hr">HR</TabsTrigger>
                   <TabsTrigger value="department_head">Manager</TabsTrigger>
@@ -53,35 +53,37 @@ export default function Login() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="font-light">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="john.doe@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    className="font-light"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="font-light">Password</Label>
                   <Input
                     id="password"
                     type="password"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    className="font-light"
                     required
                   />
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" size="lg">
+              <Button type="submit" className="w-full font-light tracking-wide" size="lg">
                 Sign In
               </Button>
 
-              <p className="text-xs text-center text-muted-foreground">
+              <p className="text-xs text-center text-muted-foreground font-light">
                 Demo: Use any email/password combination to login
               </p>
             </form>

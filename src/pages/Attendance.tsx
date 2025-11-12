@@ -28,15 +28,15 @@ export default function Attendance() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Attendance Tracking</h1>
-          <p className="text-muted-foreground mt-1">Monitor employee attendance and hours</p>
+          <h1 className="text-4xl font-extralight tracking-wider">Attendance Tracking</h1>
+          <p className="text-muted-foreground mt-2 font-light tracking-wide">Monitor employee attendance and hours</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2 font-light tracking-wide">
             <CalendarIcon className="w-4 h-4" />
             Select Date
           </Button>
-          <Button className="gap-2">
+          <Button className="gap-2 font-light tracking-wide">
             <Download className="w-4 h-4" />
             Export Report
           </Button>
@@ -48,8 +48,8 @@ export default function Attendance() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Present</p>
-                <p className="text-3xl font-bold">{presentCount}</p>
+                <p className="text-sm text-muted-foreground font-light">Present</p>
+                <p className="text-3xl font-extralight">{presentCount}</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center">
                 <Clock className="w-6 h-6 text-success" />
@@ -62,8 +62,8 @@ export default function Attendance() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Absent</p>
-                <p className="text-3xl font-bold">{absentCount}</p>
+                <p className="text-sm text-muted-foreground font-light">Absent</p>
+                <p className="text-3xl font-extralight">{absentCount}</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center">
                 <Clock className="w-6 h-6 text-destructive" />
@@ -76,8 +76,8 @@ export default function Attendance() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">On Leave</p>
-                <p className="text-3xl font-bold">{onLeaveCount}</p>
+                <p className="text-sm text-muted-foreground font-light">On Leave</p>
+                <p className="text-3xl font-extralight">{onLeaveCount}</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
                 <Clock className="w-6 h-6 text-accent" />
@@ -90,8 +90,8 @@ export default function Attendance() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Late</p>
-                <p className="text-3xl font-bold">{lateCount}</p>
+                <p className="text-sm text-muted-foreground font-light">Late</p>
+                <p className="text-3xl font-extralight">{lateCount}</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
                 <Clock className="w-6 h-6 text-warning" />
@@ -103,7 +103,7 @@ export default function Attendance() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Today's Attendance</CardTitle>
+          <CardTitle className="font-light tracking-wide">Today's Attendance</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -119,8 +119,8 @@ export default function Attendance() {
                     className="w-10 h-10 rounded-full"
                   />
                   <div className="flex-1">
-                    <p className="font-medium">{getEmployeeName(attendance.employeeId)}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-light">{getEmployeeName(attendance.employeeId)}</p>
+                    <p className="text-sm text-muted-foreground font-light">
                       {mockEmployees.find(e => e.id === attendance.employeeId)?.department}
                     </p>
                   </div>

@@ -19,8 +19,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Overview of your workforce</p>
+        <h1 className="text-4xl font-extralight tracking-wider">Dashboard</h1>
+        <p className="text-muted-foreground mt-2 font-light tracking-wide">Overview of your workforce</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -54,8 +54,8 @@ export default function Dashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Recent Leave Requests</CardTitle>
-                <CardDescription>Latest leave applications from employees</CardDescription>
+                <CardTitle className="font-light tracking-wide">Recent Leave Requests</CardTitle>
+                <CardDescription className="font-light">Latest leave applications from employees</CardDescription>
               </div>
               <Calendar className="w-5 h-5 text-muted-foreground" />
             </div>
@@ -95,8 +95,8 @@ export default function Dashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Top Performers</CardTitle>
-                <CardDescription>Employees with highest ratings this quarter</CardDescription>
+                <CardTitle className="font-light tracking-wide">Top Performers</CardTitle>
+                <CardDescription className="font-light">Employees with highest ratings this quarter</CardDescription>
               </div>
               <TrendingUp className="w-5 h-5 text-muted-foreground" />
             </div>

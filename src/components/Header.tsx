@@ -9,15 +9,15 @@ export const Header = () => {
       <div className="flex items-center gap-4">
         <SidebarTrigger className="text-foreground" />
         <div>
-          <h1 className="text-lg font-semibold text-foreground">Employee Management System</h1>
-          <p className="text-xs text-muted-foreground">Manage your workforce efficiently</p>
+          <h1 className="text-lg font-light tracking-wider text-foreground">ELEVATE</h1>
+          <p className="text-xs text-muted-foreground font-light tracking-wide">Workforce Management</p>
         </div>
       </div>
       
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5" />
-          <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center bg-accent text-accent-foreground text-xs">
+          <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center bg-accent text-accent-foreground text-xs font-light">
             3
           </Badge>
         </Button>

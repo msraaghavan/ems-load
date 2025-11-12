@@ -19,11 +19,11 @@ export const StatCard = ({ title, value, icon: Icon, trend, className }: StatCar
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-3xl font-bold text-foreground">{value}</p>
+            <p className="text-sm font-light text-muted-foreground tracking-wide">{title}</p>
+            <p className="text-3xl font-extralight text-foreground tracking-wide">{value}</p>
             {trend && (
               <p className={cn(
-                'text-sm font-medium flex items-center gap-1',
+                'text-sm font-light flex items-center gap-1',
                 trend.isPositive ? 'text-success' : 'text-destructive'
               )}>
                 {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%

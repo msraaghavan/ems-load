@@ -28,10 +28,10 @@ export default function Employees() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Employees</h1>
-          <p className="text-muted-foreground mt-1">Manage your workforce</p>
+          <h1 className="text-4xl font-extralight tracking-wider">Employees</h1>
+          <p className="text-muted-foreground mt-2 font-light tracking-wide">Manage your workforce</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2 font-light tracking-wide">
           <Plus className="w-4 h-4" />
           Add Employee
         </Button>
@@ -44,7 +44,7 @@ export default function Employees() {
             placeholder="Search employees by name, department, or position..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 font-light"
           />
         </div>
       </div>
@@ -61,8 +61,8 @@ export default function Employees() {
                     className="w-12 h-12 rounded-full"
                   />
                   <div>
-                    <CardTitle className="text-lg">{employee.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{employee.position}</p>
+                    <CardTitle className="text-lg font-light tracking-wide">{employee.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground font-light">{employee.position}</p>
                   </div>
                 </div>
                 <Badge variant={getStatusColor(employee.status)} className="capitalize">
@@ -97,7 +97,7 @@ export default function Employees() {
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full mt-4">
+              <Button variant="outline" className="w-full mt-4 font-light tracking-wide">
                 View Profile
               </Button>
             </CardContent>
