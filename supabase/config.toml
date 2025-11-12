@@ -1,1 +1,25 @@
 project_id = "qittfhcbwubrjoukbxqp"
+
+[functions.create-company]
+verify_jwt = true
+
+[functions.generate-invite]
+verify_jwt = true
+
+[functions.join-company]
+verify_jwt = true
+
+[functions.validate-geofence]
+verify_jwt = true
+
+[functions.verify-face]
+verify_jwt = true
+
+[functions.check-in]
+verify_jwt = true
+
+[functions.check-out]
+verify_jwt = true
+
+[functions.generate-report]
+verify_jwt = true
