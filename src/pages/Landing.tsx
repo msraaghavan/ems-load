@@ -43,7 +43,7 @@ const Landing = () => {
         if (star.x < 0 || star.x > canvas.width) star.vx *= -1;
         if (star.y < 0 || star.y > canvas.height) star.vy *= -1;
 
-        ctx.fillStyle = "rgba(234, 179, 8, 0.6)";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
         ctx.beginPath();
         ctx.arc(star.x, star.y, 2, 0, Math.PI * 2);
         ctx.fill();
@@ -54,7 +54,7 @@ const Landing = () => {
         // Connect to mouse
         const distToMouse = Math.hypot(mouse.x - star.x, mouse.y - star.y);
         if (distToMouse < connectionDistance) {
-          ctx.strokeStyle = `rgba(234, 179, 8, ${1 - distToMouse / connectionDistance})`;
+          ctx.strokeStyle = `rgba(0, 0, 0, ${1 - distToMouse / connectionDistance})`;
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(star.x, star.y);
@@ -66,7 +66,7 @@ const Landing = () => {
         for (let j = i + 1; j < stars.length; j++) {
           const dist = Math.hypot(stars[j].x - star.x, stars[j].y - star.y);
           if (dist < connectionDistance) {
-            ctx.strokeStyle = `rgba(234, 179, 8, ${0.3 * (1 - dist / connectionDistance)})`;
+            ctx.strokeStyle = `rgba(0, 0, 0, ${0.3 * (1 - dist / connectionDistance)})`;
             ctx.lineWidth = 0.5;
             ctx.beginPath();
             ctx.moveTo(star.x, star.y);
