@@ -16,6 +16,7 @@ import Payroll from "./pages/Payroll";
 import Performance from "./pages/Performance";
 import Departments from "./pages/Departments";
 import Reports from "./pages/Reports";
+import Geofences from "./pages/Geofences";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -106,6 +107,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Layout><Reports /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/geofences"
+              element={
+                <ProtectedRoute>
+                  <Layout><Geofences /></Layout>
                 </ProtectedRoute>
               }
             />
