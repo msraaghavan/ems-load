@@ -12,6 +12,7 @@ serve(async (req) => {
   }
 
   try {
+    // Client for auth verification
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -28,6 +29,11 @@ serve(async (req) => {
       throw new Error('Not authenticated');
     }
 
+    // Admin client for privileged operations
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
     const { name } = await req.json();
     
     if (!name) {
@@ -36,8 +42,8 @@ serve(async (req) => {
 
     console.log('Creating company:', name, 'for user:', user.id);
 
-    // Create company
-    const { data: company, error: companyError } = await supabaseClient
+    // Create company using admin client
+    const { data: company, error: companyError } = await supabaseAdmin
       .from('companies')
       .insert({
         name,
@@ -54,7 +60,7 @@ serve(async (req) => {
     console.log('Company created:', company.id);
 
     // Assign admin role to the creator
-    const { error: roleError } = await supabaseClient
+    const { error: roleError } = await supabaseAdmin
       .from('user_roles')
       .insert({
         user_id: user.id,
@@ -68,7 +74,7 @@ serve(async (req) => {
     }
 
     // Update profile with company_id
-    const { error: profileError } = await supabaseClient
+    const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({ company_id: company.id })
       .eq('id', user.id);
