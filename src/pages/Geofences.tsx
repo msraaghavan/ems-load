@@ -42,6 +42,7 @@ const Geofences = () => {
     longitude: 0,
     radius_meters: 100
   });
+  const [gettingLocation, setGettingLocation] = useState(false);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const markers = useRef<L.Marker[]>([]);
@@ -59,10 +60,16 @@ const Geofences = () => {
   }, [user]);
 
   useEffect(() => {
-    if (mapContainer.current && !map.current) {
-      initializeMap();
-    }
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (mapContainer.current && !map.current) {
+        console.log('Initializing map...');
+        initializeMap();
+      }
+    }, 100);
+    
     return () => {
+      clearTimeout(timer);
       if (map.current) {
         map.current.remove();
         map.current = null;
@@ -113,16 +120,33 @@ const Geofences = () => {
   };
 
   const initializeMap = () => {
-    if (!mapContainer.current || map.current) return;
+    if (!mapContainer.current || map.current) {
+      console.log('Map already initialized or container not ready');
+      return;
+    }
 
-    // Initialize map with OpenStreetMap tiles
-    map.current = L.map(mapContainer.current).setView([0, 0], 2);
+    try {
+      console.log('Creating map instance...');
+      // Initialize map with OpenStreetMap tiles
+      map.current = L.map(mapContainer.current, {
+        center: [20, 0],
+        zoom: 2,
+        zoomControl: true,
+      });
 
-    // Add OpenStreetMap tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-    }).addTo(map.current);
+      console.log('Adding tile layer...');
+      // Add OpenStreetMap tile layer
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+      }).addTo(map.current);
+
+      console.log('Map initialized successfully');
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      toast.error('Failed to initialize map');
+      return;
+    }
 
     // Add click event to set geofence location
     map.current.on('click', (e: L.LeafletMouseEvent) => {
@@ -260,6 +284,89 @@ const Geofences = () => {
     if (companyId) fetchGeofences(companyId);
   };
 
+  const useMyLocation = () => {
+    setGettingLocation(true);
+    
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      setGettingLocation(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        setNewGeofence(prev => ({
+          ...prev,
+          latitude,
+          longitude
+        }));
+
+        // Center map on user's location
+        if (map.current) {
+          map.current.setView([latitude, longitude], 16);
+          
+          // Clear existing temporary markers
+          markers.current.forEach(m => m.remove());
+          circles.current.forEach(c => c.remove());
+          markers.current = [];
+          circles.current = [];
+
+          // Add marker at user's location
+          const marker = L.marker([latitude, longitude], {
+            icon: L.icon({
+              iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+              iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+              shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+            })
+          }).addTo(map.current);
+
+          const circle = L.circle([latitude, longitude], {
+            radius: newGeofence.radius_meters,
+            color: '#8B5CF6',
+            fillColor: '#8B5CF6',
+            fillOpacity: 0.2
+          }).addTo(map.current);
+
+          markers.current.push(marker);
+          circles.current.push(circle);
+
+          // Add existing geofences back
+          geofences.forEach(geofence => {
+            const geoMarker = L.marker([geofence.latitude, geofence.longitude]).addTo(map.current!);
+            geoMarker.bindPopup(`<strong>${geofence.name}</strong><br/>Radius: ${geofence.radius_meters}m`);
+            
+            const geoCircle = L.circle([geofence.latitude, geofence.longitude], {
+              radius: geofence.radius_meters,
+              color: '#3B82F6',
+              fillColor: '#3B82F6',
+              fillOpacity: 0.2
+            }).addTo(map.current!);
+            
+            markers.current.push(geoMarker);
+            circles.current.push(geoCircle);
+          });
+        }
+
+        toast.success('Location acquired successfully');
+        setGettingLocation(false);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        toast.error('Failed to get your location. Please check permissions.');
+        setGettingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
   if (loading || roleLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -302,6 +409,16 @@ const Geofences = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <Button 
+                onClick={useMyLocation} 
+                disabled={gettingLocation}
+                variant="outline" 
+                className="w-full font-light tracking-wide"
+              >
+                <MapPin className="w-4 h-4 mr-2" />
+                {gettingLocation ? 'Getting Location...' : 'Use My Location'}
+              </Button>
+              
               <div>
                 <Label htmlFor="name" className="font-light">Location Name</Label>
                 <Input
