@@ -2,12 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { FileText, Download, TrendingUp, Users, Clock, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 export default function Reports() {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [generating, setGenerating] = useState<number | null>(null);
 

@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DollarSign, Download, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -25,7 +25,7 @@ interface Profile {
 }
 
 export default function Payroll() {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
