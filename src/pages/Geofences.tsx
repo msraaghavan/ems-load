@@ -60,13 +60,13 @@ const Geofences = () => {
   }, [user]);
 
   useEffect(() => {
-    // Small delay to ensure DOM is ready
+    // Wait for container to be fully rendered
     const timer = setTimeout(() => {
-      if (mapContainer.current && !map.current) {
+      if (mapContainer.current && !map.current && !roleLoading) {
         console.log('Initializing map...');
         initializeMap();
       }
-    }, 100);
+    }, 300);
     
     return () => {
       clearTimeout(timer);
@@ -75,7 +75,7 @@ const Geofences = () => {
         map.current = null;
       }
     };
-  }, []);
+  }, [roleLoading]);
 
   useEffect(() => {
     if (map.current && geofences.length > 0) {
@@ -127,29 +127,42 @@ const Geofences = () => {
 
     try {
       console.log('Creating map instance...');
+      console.log('Container dimensions:', mapContainer.current.offsetWidth, mapContainer.current.offsetHeight);
+      
       // Initialize map with OpenStreetMap tiles
       map.current = L.map(mapContainer.current, {
         center: [20, 0],
         zoom: 2,
         zoomControl: true,
+        preferCanvas: true,
       });
 
       console.log('Adding tile layer...');
       // Add OpenStreetMap tile layer
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
-      }).addTo(map.current);
+        minZoom: 1,
+      });
+      
+      tileLayer.on('tileerror', (error) => {
+        console.error('Tile loading error:', error);
+      });
+      
+      tileLayer.addTo(map.current);
 
       console.log('Map initialized successfully');
       
-      // Force map to recalculate size
-      setTimeout(() => {
-        if (map.current) {
-          map.current.invalidateSize();
-          console.log('Map size invalidated');
-        }
-      }, 100);
+      // Force map to recalculate size multiple times to ensure proper rendering
+      const invalidateSizes = [100, 300, 500];
+      invalidateSizes.forEach(delay => {
+        setTimeout(() => {
+          if (map.current) {
+            map.current.invalidateSize();
+            console.log(`Map size invalidated after ${delay}ms`);
+          }
+        }, delay);
+      });
     } catch (error) {
       console.error('Error initializing map:', error);
       toast.error('Failed to initialize map');
@@ -404,7 +417,11 @@ const Geofences = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div ref={mapContainer} className="w-full h-[500px] rounded-lg border" />
+            <div 
+              ref={mapContainer} 
+              className="w-full h-[500px] rounded-lg border bg-muted/10" 
+              style={{ minHeight: '500px' }}
+            />
           </CardContent>
         </Card>
 
