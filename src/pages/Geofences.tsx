@@ -142,6 +142,14 @@ const Geofences = () => {
       }).addTo(map.current);
 
       console.log('Map initialized successfully');
+      
+      // Force map to recalculate size
+      setTimeout(() => {
+        if (map.current) {
+          map.current.invalidateSize();
+          console.log('Map size invalidated');
+        }
+      }, 100);
     } catch (error) {
       console.error('Error initializing map:', error);
       toast.error('Failed to initialize map');
