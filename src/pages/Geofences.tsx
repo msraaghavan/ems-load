@@ -31,7 +31,7 @@ interface Geofence {
 
 const Geofences = () => {
   const { user } = useSupabaseAuth();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,12 +47,12 @@ const Geofences = () => {
   const markers = useRef<L.Marker[]>([]);
   const circles = useRef<L.Circle[]>([]);
 
-  // Redirect if not admin
+  // Redirect if not admin (only after role is loaded)
   useEffect(() => {
-    if (user && !isAdmin) {
+    if (user && !roleLoading && !isAdmin) {
       navigate('/dashboard');
     }
-  }, [isAdmin, user, navigate]);
+  }, [isAdmin, roleLoading, user, navigate]);
 
   useEffect(() => {
     fetchCompanyAndGeofences();
@@ -260,7 +260,7 @@ const Geofences = () => {
     if (companyId) fetchGeofences(companyId);
   };
 
-  if (loading) {
+  if (loading || roleLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
