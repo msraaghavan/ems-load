@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Award, TrendingUp, Target, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useState, useEffect } from 'react';
 
 interface PerformanceReview {
@@ -22,7 +22,7 @@ interface PerformanceReview {
 }
 
 export default function Performance() {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   const [reviews, setReviews] = useState<PerformanceReview[]>([]);
   const [loading, setLoading] = useState(true);
 
