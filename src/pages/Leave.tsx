@@ -168,7 +168,7 @@ export default function Leave() {
             {isAdminOrHR ? 'Manage leave requests and balances' : 'View and apply for leave'}
           </p>
         </div>
-        {companyId && (
+        {companyId && !isAdminOrHR && (
           <LeaveRequestDialog 
             onSuccess={() => fetchLeaves(companyId)} 
             companyId={companyId} 
