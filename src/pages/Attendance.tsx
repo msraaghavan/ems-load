@@ -140,10 +140,12 @@ export default function Attendance() {
           </p>
         </div>
         <div className="flex gap-2">
-          <AttendanceCheckInDialog 
-            onSuccess={() => companyId && fetchAttendance(companyId)} 
-            companyId={companyId || ''} 
-          />
+          {companyId && (
+            <AttendanceCheckInDialog 
+              onSuccess={() => fetchAttendance(companyId)} 
+              companyId={companyId} 
+            />
+          )}
           {(isAdminOrHR || isDepartmentHead) && (
             <>
               <Button variant="outline" className="gap-2 font-light tracking-wide">
