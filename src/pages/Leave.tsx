@@ -168,10 +168,12 @@ export default function Leave() {
             {isAdminOrHR ? 'Manage leave requests and balances' : 'View and apply for leave'}
           </p>
         </div>
-        <LeaveRequestDialog 
-          onSuccess={() => companyId && fetchLeaves(companyId)} 
-          companyId={companyId || ''} 
-        />
+        {companyId && (
+          <LeaveRequestDialog 
+            onSuccess={() => fetchLeaves(companyId)} 
+            companyId={companyId} 
+          />
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
