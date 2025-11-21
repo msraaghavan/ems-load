@@ -7,6 +7,7 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useUserRole } from '@/hooks/useUserRole';
+import { PayslipGenerationDialog } from '@/components/PayslipGenerationDialog';
 
 interface PayrollRecord {
   id: string;
@@ -31,6 +32,7 @@ export default function Payroll() {
   const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
+  const [companyId, setCompanyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -50,6 +52,8 @@ export default function Payroll() {
         setLoading(false);
         return;
       }
+
+      setCompanyId(profile.company_id);
 
       const { data: payrollData, error } = await supabase
         .from('payroll')
@@ -140,11 +144,11 @@ export default function Payroll() {
             {isAdminOrHR ? 'Process and manage employee salaries' : 'View your salary and payment history'}
           </p>
         </div>
-        {isAdminOrHR && (
-          <Button className="gap-2">
-            <FileText className="w-4 h-4" />
-            Generate Payslips
-          </Button>
+        {isAdminOrHR && companyId && (
+          <PayslipGenerationDialog 
+            onSuccess={fetchPayrollData}
+            companyId={companyId}
+          />
         )}
       </div>
 
