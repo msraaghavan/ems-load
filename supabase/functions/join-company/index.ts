@@ -65,13 +65,13 @@ serve(async (req) => {
       throw new Error('You are already a member of this company');
     }
 
-    // Add user to company with employee role
+    // Add user to company with role from invite code
     const { error: roleError } = await supabaseClient
       .from('user_roles')
       .insert({
         user_id: user.id,
         company_id: inviteCode.company_id,
-        role: 'employee',
+        role: inviteCode.role,
       });
 
     if (roleError) {

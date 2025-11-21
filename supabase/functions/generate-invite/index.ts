@@ -37,7 +37,7 @@ serve(async (req) => {
       throw new Error('Not authenticated');
     }
 
-    const { company_id, max_uses, expires_in_days } = await req.json();
+    const { company_id, max_uses, expires_in_days, role } = await req.json();
 
     console.log('Generating invite code for company:', company_id);
 
@@ -67,6 +67,7 @@ serve(async (req) => {
         max_uses: max_uses || 1,
         created_by: user.id,
         expires_at: expiresAt,
+        role: role || 'employee',
       })
       .select()
       .single();

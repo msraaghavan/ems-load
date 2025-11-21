@@ -17,6 +17,7 @@ import Performance from "./pages/Performance";
 import Departments from "./pages/Departments";
 import Reports from "./pages/Reports";
 import Geofences from "./pages/Geofences";
+import InviteCodes from "./pages/InviteCodes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -115,6 +116,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Layout><Geofences /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/invite-codes"
+              element={
+                <ProtectedRoute>
+                  <Layout><InviteCodes /></Layout>
                 </ProtectedRoute>
               }
             />

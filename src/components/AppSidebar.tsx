@@ -8,7 +8,8 @@ import {
   Building2, 
   FileText,
   MapPin,
-  LogOut
+  LogOut,
+  Ticket
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -37,6 +38,7 @@ const menuItems = [
   { title: 'Departments', url: '/departments', icon: Building2 },
   { title: 'Reports', url: '/reports', icon: FileText },
   { title: 'Geofences', url: '/geofences', icon: MapPin },
+  { title: 'Invite Codes', url: '/invite-codes', icon: Ticket },
 ];
 
 export function AppSidebar() {
