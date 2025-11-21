@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useState, useEffect } from 'react';
 import { useUserRole } from '@/hooks/useUserRole';
+import { CreateReviewDialog } from '@/components/CreateReviewDialog';
 
 interface PerformanceReview {
   id: string;
@@ -27,6 +28,7 @@ export default function Performance() {
   const { isAdminOrHR, isDepartmentHead } = useUserRole();
   const [reviews, setReviews] = useState<PerformanceReview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -101,12 +103,18 @@ export default function Performance() {
           </p>
         </div>
         {(isAdminOrHR || isDepartmentHead) && (
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => setShowCreateDialog(true)}>
             <Plus className="w-4 h-4" />
             New Review
           </Button>
         )}
       </div>
+
+      <CreateReviewDialog 
+        open={showCreateDialog} 
+        onOpenChange={setShowCreateDialog}
+        onSuccess={fetchPerformanceReviews}
+      />
 
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="border-l-4 border-l-accent">
@@ -159,7 +167,7 @@ export default function Performance() {
             <CardContent className="flex flex-col items-center justify-center py-12">
               <p className="text-muted-foreground mb-4">No performance reviews yet</p>
               {(isAdminOrHR || isDepartmentHead) && (
-                <Button className="gap-2">
+                <Button className="gap-2" onClick={() => setShowCreateDialog(true)}>
                   <Plus className="w-4 h-4" />
                   Create First Review
                 </Button>

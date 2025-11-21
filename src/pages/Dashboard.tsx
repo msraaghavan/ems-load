@@ -8,6 +8,7 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/hooks/useUserRole';
+import { AttendanceCheckInDialog } from '@/components/AttendanceCheckInDialog';
 
 export default function Dashboard() {
   const { user } = useSupabaseAuth();
@@ -147,13 +148,21 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-4xl font-extralight tracking-wider">
-          {isAdminOrHR || isDepartmentHead ? 'Dashboard' : 'My Dashboard'}
-        </h1>
-        <p className="text-muted-foreground mt-2 font-light tracking-wide">
-          {isAdminOrHR || isDepartmentHead ? 'Overview of your workforce' : 'Your work statistics and updates'}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-extralight tracking-wider">
+            {isAdminOrHR || isDepartmentHead ? 'Dashboard' : 'My Dashboard'}
+          </h1>
+          <p className="text-muted-foreground mt-2 font-light tracking-wide">
+            {isAdminOrHR || isDepartmentHead ? 'Overview of your workforce' : 'Your work statistics and updates'}
+          </p>
+        </div>
+        {!isAdminOrHR && !isDepartmentHead && companyId && (
+          <AttendanceCheckInDialog 
+            onSuccess={() => fetchDashboardData()} 
+            companyId={companyId} 
+          />
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

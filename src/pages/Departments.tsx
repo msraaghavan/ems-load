@@ -6,6 +6,7 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useState, useEffect } from 'react';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useNavigate } from 'react-router-dom';
+import { CreateDepartmentDialog } from '@/components/CreateDepartmentDialog';
 
 interface Department {
   id: string;
@@ -21,6 +22,7 @@ export default function Departments() {
   const navigate = useNavigate();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   // Redirect if not authorized (only after role is loaded)
   useEffect(() => {
@@ -73,17 +75,23 @@ export default function Departments() {
           <h1 className="text-3xl font-bold">Departments</h1>
           <p className="text-muted-foreground mt-1">Manage organizational structure</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setShowCreateDialog(true)}>
           <Plus className="w-4 h-4" />
           New Department
         </Button>
       </div>
 
+      <CreateDepartmentDialog 
+        open={showCreateDialog} 
+        onOpenChange={setShowCreateDialog}
+        onSuccess={fetchDepartments}
+      />
+
       {departments.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-muted-foreground mb-4">No departments found</p>
-            <Button className="gap-2">
+            <Button className="gap-2" onClick={() => setShowCreateDialog(true)}>
               <Plus className="w-4 h-4" />
               Create First Department
             </Button>
