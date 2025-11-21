@@ -34,10 +34,14 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-    const { name } = await req.json();
+    const { name, facePhoto } = await req.json();
     
     if (!name) {
       throw new Error('Company name is required');
+    }
+
+    if (!facePhoto) {
+      throw new Error('Face photo is required for security verification');
     }
 
     console.log('Creating company:', name, 'for user:', user.id);
@@ -82,6 +86,23 @@ serve(async (req) => {
     if (profileError) {
       console.error('Error updating profile:', profileError);
       throw profileError;
+    }
+
+    // Store face photo for attendance verification
+    const { error: photoError } = await supabaseAdmin
+      .from('attendance_photos')
+      .insert({
+        user_id: user.id,
+        company_id: company.id,
+        photo_url: facePhoto,
+        is_primary: true,
+      });
+
+    if (photoError) {
+      console.error('Error saving face photo:', photoError);
+      console.log('Company created but face photo was not saved');
+    } else {
+      console.log('Face photo saved successfully for admin attendance verification');
     }
 
     console.log('Company setup complete');
