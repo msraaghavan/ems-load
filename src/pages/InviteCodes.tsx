@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,7 @@ interface InviteCode {
 
 export default function InviteCodes() {
   const { user, isAuthenticated } = useSupabaseAuth();
+  const { isAdmin } = useUserRole();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -32,6 +34,13 @@ export default function InviteCodes() {
   const [selectedRole, setSelectedRole] = useState<string>("employee");
   const [maxUses, setMaxUses] = useState<string>("1");
   const [expiresInDays, setExpiresInDays] = useState<string>("");
+
+  // Redirect if not admin
+  useEffect(() => {
+    if (user && !isAdmin) {
+      navigate('/dashboard');
+    }
+  }, [isAdmin, user, navigate]);
 
   useEffect(() => {
     if (!isAuthenticated) {

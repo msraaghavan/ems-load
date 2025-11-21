@@ -6,6 +6,7 @@ import { Calendar, Plus, Check, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { toast } from 'sonner';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface LeaveRequest {
   id: string;
@@ -22,6 +23,7 @@ interface LeaveRequest {
 
 export default function Leave() {
   const { user } = useSupabaseAuth();
+  const { isAdminOrHR, companyId: userCompanyId } = useUserRole();
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -55,11 +57,17 @@ export default function Leave() {
   };
 
   const fetchLeaves = async (company_id: string) => {
-    const { data, error } = await supabase
+    // If not admin/HR, only fetch user's own leaves
+    let query = supabase
       .from('leave_requests')
       .select('*')
-      .eq('company_id', company_id)
-      .order('created_at', { ascending: false });
+      .eq('company_id', company_id);
+    
+    if (!isAdminOrHR && user) {
+      query = query.eq('user_id', user.id);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching leaves:', error);
@@ -154,12 +162,14 @@ export default function Leave() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Leave Management</h1>
-          <p className="text-muted-foreground mt-1">Manage leave requests and balances</p>
+          <h1 className="text-3xl font-bold">{isAdminOrHR ? 'Leave Management' : 'My Leave Requests'}</h1>
+          <p className="text-muted-foreground mt-1">
+            {isAdminOrHR ? 'Manage leave requests and balances' : 'View and apply for leave'}
+          </p>
         </div>
         <Button className="gap-2">
           <Plus className="w-4 h-4" />
-          New Leave Request
+          Apply for Leave
         </Button>
       </div>
 
@@ -253,7 +263,7 @@ export default function Leave() {
                       {leave.status}
                     </Badge>
 
-                    {leave.status === 'pending' && (
+                    {leave.status === 'pending' && isAdminOrHR && (
                       <div className="flex gap-2">
                         <Button size="sm" variant="default" className="gap-1" onClick={() => handleApprove(leave.id)}>
                           <Check className="w-4 h-4" />

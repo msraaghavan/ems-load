@@ -4,6 +4,8 @@ import { Plus, Users, TrendingUp, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useState, useEffect } from 'react';
+import { useUserRole } from '@/hooks/useUserRole';
+import { useNavigate } from 'react-router-dom';
 
 interface Department {
   id: string;
@@ -15,8 +17,17 @@ interface Department {
 
 export default function Departments() {
   const { user } = useSupabaseAuth();
+  const { isAdminOrHR, isDepartmentHead } = useUserRole();
+  const navigate = useNavigate();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Redirect if not authorized
+  useEffect(() => {
+    if (!loading && !isAdminOrHR && !isDepartmentHead) {
+      navigate('/dashboard');
+    }
+  }, [isAdminOrHR, isDepartmentHead, loading, navigate]);
 
   useEffect(() => {
     if (user) {

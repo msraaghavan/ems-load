@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Clock, Download, Calendar as CalendarIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { toast } from 'sonner';
 
 interface AttendanceRecord {
@@ -23,6 +24,7 @@ interface AttendanceRecord {
 
 export default function Attendance() {
   const { user } = useSupabaseAuth();
+  const { isAdminOrHR, isDepartmentHead } = useUserRole();
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -56,12 +58,18 @@ export default function Attendance() {
   };
 
   const fetchAttendance = async (company_id: string) => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('attendance')
       .select('*')
       .eq('company_id', company_id)
-      .eq('date', new Date().toISOString().split('T')[0])
-      .order('check_in_time', { ascending: false });
+      .eq('date', new Date().toISOString().split('T')[0]);
+    
+    // If not admin/HR/department head, only fetch own attendance
+    if (!isAdminOrHR && !isDepartmentHead && user) {
+      query = query.eq('user_id', user.id);
+    }
+    
+    const { data, error } = await query.order('check_in_time', { ascending: false });
 
     if (error) {
       console.error('Error fetching attendance:', error);
@@ -123,18 +131,26 @@ export default function Attendance() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-extralight tracking-wider">Attendance Tracking</h1>
-          <p className="text-muted-foreground mt-2 font-light tracking-wide">Monitor employee attendance and hours</p>
+          <h1 className="text-4xl font-extralight tracking-wider">
+            {isAdminOrHR || isDepartmentHead ? 'Attendance Tracking' : 'My Attendance'}
+          </h1>
+          <p className="text-muted-foreground mt-2 font-light tracking-wide">
+            {isAdminOrHR || isDepartmentHead ? 'Monitor employee attendance and hours' : 'Track your attendance and working hours'}
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2 font-light tracking-wide">
-            <CalendarIcon className="w-4 h-4" />
-            Select Date
-          </Button>
-          <Button className="gap-2 font-light tracking-wide">
-            <Download className="w-4 h-4" />
-            Export Report
-          </Button>
+          {(isAdminOrHR || isDepartmentHead) && (
+            <>
+              <Button variant="outline" className="gap-2 font-light tracking-wide">
+                <CalendarIcon className="w-4 h-4" />
+                Select Date
+              </Button>
+              <Button className="gap-2 font-light tracking-wide">
+                <Download className="w-4 h-4" />
+                Export Report
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

@@ -5,11 +5,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useUserRole } from '@/hooks/useUserRole';
+import { useNavigate } from 'react-router-dom';
 
 export default function Reports() {
   const { user } = useSupabaseAuth();
+  const { isAdminOrHR } = useUserRole();
+  const navigate = useNavigate();
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [generating, setGenerating] = useState<number | null>(null);
+
+  // Redirect if not authorized
+  useEffect(() => {
+    if (user && !isAdminOrHR) {
+      navigate('/dashboard');
+    }
+  }, [isAdminOrHR, user, navigate]);
 
   useEffect(() => {
     if (user) {

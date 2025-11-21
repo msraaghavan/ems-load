@@ -5,6 +5,7 @@ import { Award, TrendingUp, Target, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useState, useEffect } from 'react';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface PerformanceReview {
   id: string;
@@ -23,6 +24,7 @@ interface PerformanceReview {
 
 export default function Performance() {
   const { user } = useSupabaseAuth();
+  const { isAdminOrHR, isDepartmentHead } = useUserRole();
   const [reviews, setReviews] = useState<PerformanceReview[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,6 +51,8 @@ export default function Performance() {
         .from('performance_reviews')
         .select('*')
         .eq('company_id', profile.company_id)
+        // If not admin/HR/department head, only fetch own reviews
+        .eq(isAdminOrHR || isDepartmentHead ? 'company_id' : 'user_id', isAdminOrHR || isDepartmentHead ? profile.company_id : user?.id)
         .order('review_period_end', { ascending: false });
 
       if (error) throw error;
@@ -91,13 +95,17 @@ export default function Performance() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Performance Management</h1>
-          <p className="text-muted-foreground mt-1">Track employee performance reviews</p>
+          <h1 className="text-3xl font-bold">{isAdminOrHR || isDepartmentHead ? 'Performance Management' : 'My Performance Reviews'}</h1>
+          <p className="text-muted-foreground mt-1">
+            {isAdminOrHR || isDepartmentHead ? 'Track employee performance reviews' : 'View your performance history'}
+          </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="w-4 h-4" />
-          New Review
-        </Button>
+        {(isAdminOrHR || isDepartmentHead) && (
+          <Button className="gap-2">
+            <Plus className="w-4 h-4" />
+            New Review
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -150,10 +158,12 @@ export default function Performance() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <p className="text-muted-foreground mb-4">No performance reviews yet</p>
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" />
-                Create First Review
-              </Button>
+              {(isAdminOrHR || isDepartmentHead) && (
+                <Button className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Create First Review
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (

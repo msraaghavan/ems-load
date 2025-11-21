@@ -6,6 +6,8 @@ import { Search, Plus, Mail, Phone, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useState, useEffect } from 'react';
+import { useUserRole } from '@/hooks/useUserRole';
+import { useNavigate } from 'react-router-dom';
 
 interface Employee {
   id: string;
@@ -19,9 +21,18 @@ interface Employee {
 
 export default function Employees() {
   const { user } = useSupabaseAuth();
+  const { isAdminOrHR, isDepartmentHead } = useUserRole();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Redirect if not authorized
+  useEffect(() => {
+    if (!loading && !isAdminOrHR && !isDepartmentHead) {
+      navigate('/dashboard');
+    }
+  }, [isAdminOrHR, isDepartmentHead, loading, navigate]);
 
   useEffect(() => {
     if (user) {
