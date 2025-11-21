@@ -24,7 +24,7 @@ interface InviteCode {
 
 export default function InviteCodes() {
   const { user, isAuthenticated } = useSupabaseAuth();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -35,12 +35,12 @@ export default function InviteCodes() {
   const [maxUses, setMaxUses] = useState<string>("1");
   const [expiresInDays, setExpiresInDays] = useState<string>("");
 
-  // Redirect if not admin
+  // Redirect if not admin (only after role is loaded)
   useEffect(() => {
-    if (user && !isAdmin) {
+    if (user && !roleLoading && !isAdmin) {
       navigate('/dashboard');
     }
-  }, [isAdmin, user, navigate]);
+  }, [isAdmin, roleLoading, user, navigate]);
 
   useEffect(() => {
     if (!isAuthenticated) {

@@ -21,18 +21,18 @@ interface Employee {
 
 export default function Employees() {
   const { user } = useSupabaseAuth();
-  const { isAdminOrHR, isDepartmentHead } = useUserRole();
+  const { isAdminOrHR, isDepartmentHead, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Redirect if not authorized
+  // Redirect if not authorized (only after role is loaded)
   useEffect(() => {
-    if (!loading && !isAdminOrHR && !isDepartmentHead) {
+    if (user && !roleLoading && !isAdminOrHR && !isDepartmentHead) {
       navigate('/dashboard');
     }
-  }, [isAdminOrHR, isDepartmentHead, loading, navigate]);
+  }, [isAdminOrHR, isDepartmentHead, roleLoading, user, navigate]);
 
   useEffect(() => {
     if (user) {

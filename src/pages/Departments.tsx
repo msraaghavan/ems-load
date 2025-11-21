@@ -17,17 +17,17 @@ interface Department {
 
 export default function Departments() {
   const { user } = useSupabaseAuth();
-  const { isAdminOrHR, isDepartmentHead } = useUserRole();
+  const { isAdminOrHR, isDepartmentHead, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Redirect if not authorized
+  // Redirect if not authorized (only after role is loaded)
   useEffect(() => {
-    if (!loading && !isAdminOrHR && !isDepartmentHead) {
+    if (user && !roleLoading && !isAdminOrHR && !isDepartmentHead) {
       navigate('/dashboard');
     }
-  }, [isAdminOrHR, isDepartmentHead, loading, navigate]);
+  }, [isAdminOrHR, isDepartmentHead, roleLoading, user, navigate]);
 
   useEffect(() => {
     if (user) {
@@ -63,7 +63,7 @@ export default function Departments() {
     }
   };
 
-  if (loading) {
+  if (loading || roleLoading) {
     return <div className="flex items-center justify-center h-96">Loading...</div>;
   }
   return (

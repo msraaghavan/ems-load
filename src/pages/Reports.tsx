@@ -10,17 +10,17 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Reports() {
   const { user } = useSupabaseAuth();
-  const { isAdminOrHR } = useUserRole();
+  const { isAdminOrHR, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [generating, setGenerating] = useState<number | null>(null);
 
-  // Redirect if not authorized
+  // Redirect if not authorized (only after role is loaded)
   useEffect(() => {
-    if (user && !isAdminOrHR) {
+    if (user && !roleLoading && !isAdminOrHR) {
       navigate('/dashboard');
     }
-  }, [isAdminOrHR, user, navigate]);
+  }, [isAdminOrHR, roleLoading, user, navigate]);
 
   useEffect(() => {
     if (user) {
