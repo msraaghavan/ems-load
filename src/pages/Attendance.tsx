@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { AttendanceCheckInDialog } from '@/components/AttendanceCheckInDialog';
+import { DateRangeDialog } from '@/components/DateRangeDialog';
 import { toast } from 'sonner';
 
 interface AttendanceRecord {
@@ -29,6 +30,8 @@ export default function Attendance() {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [showDateDialog, setShowDateDialog] = useState(false);
+  const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -58,12 +61,17 @@ export default function Attendance() {
     }
   };
 
-  const fetchAttendance = async (company_id: string) => {
+  const fetchAttendance = async (company_id: string, startDate?: string, endDate?: string) => {
     let query = supabase
       .from('attendance')
       .select('*')
-      .eq('company_id', company_id)
-      .eq('date', new Date().toISOString().split('T')[0]);
+      .eq('company_id', company_id);
+    
+    if (startDate && endDate) {
+      query = query.gte('date', startDate).lte('date', endDate);
+    } else {
+      query = query.eq('date', new Date().toISOString().split('T')[0]);
+    }
     
     // If not admin/HR/department head, only fetch own attendance
     if (!isAdminOrHR && !isDepartmentHead && user) {
@@ -115,6 +123,44 @@ export default function Attendance() {
     });
   };
 
+  const handleDateSelect = async (startDate: string, endDate: string) => {
+    setDateRange({ start: startDate, end: endDate });
+    if (companyId) {
+      setLoading(true);
+      await fetchAttendance(companyId, startDate, endDate);
+      setLoading(false);
+      toast.success(`Showing attendance from ${startDate} to ${endDate}`);
+    }
+  };
+
+  const handleExportReport = () => {
+    if (attendance.length === 0) {
+      toast.error('No attendance data to export');
+      return;
+    }
+
+    const exportData = attendance.map(record => ({
+      Date: record.date,
+      Employee: record.profiles.full_name,
+      Department: record.profiles.department,
+      'Check In': formatTime(record.check_in_time),
+      'Check Out': formatTime(record.check_out_time),
+      'Hours Worked': record.hours_worked?.toFixed(2) || '0.00',
+      Status: record.status
+    }));
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `attendance-report-${new Date().toISOString()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Attendance report exported successfully');
+  };
+
   const presentCount = attendance.filter(a => a.status === 'present').length;
   const absentCount = attendance.filter(a => a.status === 'absent').length;
   const onLeaveCount = attendance.filter(a => a.status === 'on_leave').length;
@@ -148,11 +194,11 @@ export default function Attendance() {
           )}
           {(isAdminOrHR || isDepartmentHead) && (
             <>
-              <Button variant="outline" className="gap-2 font-light tracking-wide">
+              <Button variant="outline" className="gap-2 font-light tracking-wide" onClick={() => setShowDateDialog(true)}>
                 <CalendarIcon className="w-4 h-4" />
                 Select Date
               </Button>
-              <Button className="gap-2 font-light tracking-wide">
+              <Button className="gap-2 font-light tracking-wide" onClick={handleExportReport}>
                 <Download className="w-4 h-4" />
                 Export Report
               </Button>
@@ -160,6 +206,12 @@ export default function Attendance() {
           )}
         </div>
       </div>
+
+      <DateRangeDialog 
+        open={showDateDialog} 
+        onOpenChange={setShowDateDialog}
+        onDateSelect={handleDateSelect}
+      />
 
       <div className="grid gap-6 md:grid-cols-4">
         <Card className="border-l-4 border-l-success">

@@ -8,6 +8,7 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useState, useEffect } from 'react';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useNavigate } from 'react-router-dom';
+import { AddEmployeeDialog } from '@/components/AddEmployeeDialog';
 
 interface Employee {
   id: string;
@@ -26,6 +27,7 @@ export default function Employees() {
   const [searchQuery, setSearchQuery] = useState('');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   // Redirect if not authorized (only after role is loaded)
   useEffect(() => {
@@ -94,11 +96,17 @@ export default function Employees() {
           <h1 className="text-3xl font-bold">Employees</h1>
           <p className="text-muted-foreground mt-1">Manage your workforce</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setShowAddDialog(true)}>
           <Plus className="w-4 h-4" />
           Add Employee
         </Button>
       </div>
+
+      <AddEmployeeDialog 
+        open={showAddDialog} 
+        onOpenChange={setShowAddDialog}
+        onSuccess={fetchEmployees}
+      />
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
