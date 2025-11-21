@@ -1,12 +1,91 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Clock, Download, Calendar as CalendarIcon } from 'lucide-react';
-import { mockAttendance, mockEmployees } from '@/lib/mockData';
+import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { toast } from 'sonner';
+
+interface AttendanceRecord {
+  id: string;
+  user_id: string;
+  date: string;
+  check_in_time: string | null;
+  check_out_time: string | null;
+  status: string;
+  hours_worked: number | null;
+  profiles: {
+    full_name: string;
+    department: string;
+  };
+}
 
 export default function Attendance() {
-  const getEmployeeName = (id: string) => {
-    return mockEmployees.find(e => e.id === id)?.name || 'Unknown';
+  const { user } = useSupabaseAuth();
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchCompanyAndAttendance();
+    }
+  }, [user]);
+
+  const fetchCompanyAndAttendance = async () => {
+    if (!user) return;
+
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.company_id) {
+        setCompanyId(profile.company_id);
+        await fetchAttendance(profile.company_id);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast.error('Failed to load attendance data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAttendance = async (company_id: string) => {
+    const { data, error } = await supabase
+      .from('attendance')
+      .select('*')
+      .eq('company_id', company_id)
+      .eq('date', new Date().toISOString().split('T')[0])
+      .order('check_in_time', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching attendance:', error);
+      toast.error('Failed to load attendance records');
+      return;
+    }
+
+    // Fetch profiles separately
+    if (data && data.length > 0) {
+      const userIds = [...new Set(data.map(a => a.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, department')
+        .in('id', userIds);
+
+      const attendanceWithProfiles = data.map(record => ({
+        ...record,
+        profiles: profiles?.find(p => p.id === record.user_id) || { full_name: 'Unknown', department: 'N/A' }
+      }));
+
+      setAttendance(attendanceWithProfiles);
+    } else {
+      setAttendance([]);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -19,10 +98,26 @@ export default function Attendance() {
     return variants[status as keyof typeof variants] || 'secondary';
   };
 
-  const presentCount = mockAttendance.filter(a => a.status === 'present').length;
-  const absentCount = mockAttendance.filter(a => a.status === 'absent').length;
-  const onLeaveCount = mockAttendance.filter(a => a.status === 'on_leave').length;
-  const lateCount = mockAttendance.filter(a => a.status === 'late').length;
+  const formatTime = (timestamp: string | null) => {
+    if (!timestamp) return '--:--';
+    return new Date(timestamp).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const presentCount = attendance.filter(a => a.status === 'present').length;
+  const absentCount = attendance.filter(a => a.status === 'absent').length;
+  const onLeaveCount = attendance.filter(a => a.status === 'on_leave').length;
+  const lateCount = attendance.filter(a => a.status === 'late').length;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -106,55 +201,58 @@ export default function Attendance() {
           <CardTitle className="font-light tracking-wide">Today's Attendance</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {mockAttendance.map((attendance) => (
-              <div
-                key={attendance.id}
-                className="flex items-center justify-between p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center gap-4 flex-1">
-                  <img
-                    src={mockEmployees.find(e => e.id === attendance.employeeId)?.avatar}
-                    alt={getEmployeeName(attendance.employeeId)}
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <div className="flex-1">
-                    <p className="font-light">{getEmployeeName(attendance.employeeId)}</p>
-                    <p className="text-sm text-muted-foreground font-light">
-                      {mockEmployees.find(e => e.id === attendance.employeeId)?.department}
-                    </p>
+          {attendance.length === 0 ? (
+            <div className="text-center py-12">
+              <Clock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground font-light">No attendance records for today</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {attendance.map((record) => (
+                <div
+                  key={record.id}
+                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-primary font-semibold">
+                        {record.profiles?.full_name?.charAt(0) || '?'}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-light">{record.profiles?.full_name || 'Unknown'}</p>
+                      <p className="text-sm text-muted-foreground font-light">
+                        {record.profiles?.department || 'N/A'}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-6">
-                  {attendance.checkIn && (
+                  <div className="flex items-center gap-6">
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">Check In</p>
-                      <p className="font-medium">{attendance.checkIn}</p>
+                      <p className="font-medium">{formatTime(record.check_in_time)}</p>
                     </div>
-                  )}
-                  
-                  {attendance.checkOut && (
+                    
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">Check Out</p>
-                      <p className="font-medium">{attendance.checkOut}</p>
+                      <p className="font-medium">{formatTime(record.check_out_time)}</p>
                     </div>
-                  )}
 
-                  {attendance.hoursWorked && (
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Hours</p>
-                      <p className="font-medium">{attendance.hoursWorked}h</p>
-                    </div>
-                  )}
+                    {record.hours_worked && (
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">Hours</p>
+                        <p className="font-medium">{record.hours_worked}h</p>
+                      </div>
+                    )}
 
-                  <Badge variant={getStatusBadge(attendance.status) as "default" | "destructive" | "secondary"} className="capitalize min-w-[90px] justify-center">
-                    {attendance.status.replace('_', ' ')}
-                  </Badge>
+                    <Badge variant={getStatusBadge(record.status) as "default" | "destructive" | "secondary"} className="capitalize min-w-[90px] justify-center">
+                      {record.status.replace('_', ' ')}
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
