@@ -1,8 +1,81 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, Download, TrendingUp, Users, Clock, Calendar } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 export default function Reports() {
+  const { user } = useAuth();
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [generating, setGenerating] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchCompanyId();
+    }
+  }, [user]);
+
+  const fetchCompanyId = async () => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user?.id)
+      .single();
+    
+    if (profile?.company_id) {
+      setCompanyId(profile.company_id);
+    }
+  };
+
+  const handleGenerateReport = async (reportType: string, reportId: number) => {
+    if (!companyId) {
+      toast.error('Company not found');
+      return;
+    }
+
+    setGenerating(reportId);
+    
+    try {
+      const endDate = new Date().toISOString().split('T')[0];
+      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+      const { data, error } = await supabase.functions.invoke('generate-report', {
+        body: {
+          company_id: companyId,
+          report_type: reportType,
+          start_date: startDate,
+          end_date: endDate
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success(`${reportType} report generated successfully`);
+      
+      // Download the report as JSON
+      downloadReport(data.report, reportType);
+    } catch (error: any) {
+      console.error('Error generating report:', error);
+      toast.error(error.message || 'Failed to generate report');
+    } finally {
+      setGenerating(null);
+    }
+  };
+
+  const downloadReport = (reportData: any, reportType: string) => {
+    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${reportType}-report-${new Date().toISOString()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const reportTypes = [
     {
       id: 1,
@@ -10,47 +83,26 @@ export default function Reports() {
       description: 'Comprehensive attendance data for all employees',
       icon: Clock,
       category: 'Attendance',
+      type: 'attendance',
       lastGenerated: '2025-01-10',
     },
     {
       id: 2,
-      title: 'Payroll Summary',
-      description: 'Complete payroll breakdown and salary distribution',
-      icon: FileText,
-      category: 'Payroll',
-      lastGenerated: '2025-01-08',
-    },
-    {
-      id: 3,
       title: 'Leave Analytics',
       description: 'Leave patterns and balance tracking report',
       icon: Calendar,
       category: 'Leave',
+      type: 'leave',
       lastGenerated: '2025-01-09',
     },
     {
-      id: 4,
+      id: 3,
       title: 'Performance Overview',
       description: 'Employee performance metrics and ratings',
       icon: TrendingUp,
       category: 'Performance',
+      type: 'performance',
       lastGenerated: '2025-01-07',
-    },
-    {
-      id: 5,
-      title: 'Department Analysis',
-      description: 'Department-wise resource and budget analysis',
-      icon: Users,
-      category: 'Department',
-      lastGenerated: '2025-01-06',
-    },
-    {
-      id: 6,
-      title: 'Headcount Report',
-      description: 'Employee count trends and turnover analysis',
-      icon: Users,
-      category: 'HR',
-      lastGenerated: '2025-01-05',
     },
   ];
 
@@ -83,8 +135,8 @@ export default function Reports() {
                 <Download className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Downloads This Month</p>
-                <p className="text-3xl font-bold">142</p>
+                <p className="text-sm text-muted-foreground">Available Types</p>
+                <p className="text-3xl font-bold">3</p>
               </div>
             </div>
           </CardContent>
@@ -98,7 +150,7 @@ export default function Reports() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Report Types</p>
-                <p className="text-3xl font-bold">6</p>
+                <p className="text-3xl font-bold">3</p>
               </div>
             </div>
           </CardContent>
@@ -130,18 +182,18 @@ export default function Reports() {
                     <p className="font-medium">{report.category}</p>
                   </div>
                   <div className="space-y-1 text-right">
-                    <p className="text-xs text-muted-foreground">Last Generated</p>
-                    <p className="font-medium">{new Date(report.lastGenerated).toLocaleDateString()}</p>
+                    <p className="text-xs text-muted-foreground">Type</p>
+                    <p className="font-medium capitalize">{report.type}</p>
                   </div>
                 </div>
                 <div className="flex gap-2 mt-4">
-                  <Button className="flex-1 gap-2">
+                  <Button 
+                    className="flex-1 gap-2" 
+                    onClick={() => handleGenerateReport(report.type, report.id)}
+                    disabled={generating === report.id}
+                  >
                     <FileText className="w-4 h-4" />
-                    Generate
-                  </Button>
-                  <Button variant="outline" className="flex-1 gap-2">
-                    <Download className="w-4 h-4" />
-                    Download
+                    {generating === report.id ? 'Generating...' : 'Generate & Download'}
                   </Button>
                 </div>
               </CardContent>
@@ -149,41 +201,6 @@ export default function Reports() {
           );
         })}
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Latest report generation and downloads</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[
-              { user: 'Sarah Johnson', action: 'generated', report: 'Monthly Attendance Report', time: '2 hours ago' },
-              { user: 'Michael Chen', action: 'downloaded', report: 'Payroll Summary', time: '5 hours ago' },
-              { user: 'Emily Rodriguez', action: 'generated', report: 'Performance Overview', time: '1 day ago' },
-              { user: 'David Kumar', action: 'downloaded', report: 'Leave Analytics', time: '2 days ago' },
-            ].map((activity, i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${activity.user}`}
-                    alt={activity.user}
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <div>
-                    <p className="text-sm">
-                      <span className="font-medium">{activity.user}</span>{' '}
-                      <span className="text-muted-foreground">{activity.action}</span>{' '}
-                      <span className="font-medium">{activity.report}</span>
-                    </p>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">{activity.time}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

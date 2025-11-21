@@ -141,6 +141,50 @@ export type Database = {
         }
         Relationships: []
       }
+      departments: {
+        Row: {
+          budget: number | null
+          company_id: string
+          created_at: string | null
+          employee_count: number | null
+          head_id: string | null
+          head_name: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          budget?: number | null
+          company_id: string
+          created_at?: string | null
+          employee_count?: number | null
+          head_id?: string | null
+          head_name?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          budget?: number | null
+          company_id?: string
+          created_at?: string | null
+          employee_count?: number | null
+          head_id?: string | null
+          head_name?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       geofences: {
         Row: {
           company_id: string
@@ -272,6 +316,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "leave_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll: {
+        Row: {
+          allowances: number | null
+          basic_salary: number
+          company_id: string
+          created_at: string | null
+          deductions: number | null
+          employee_id: string
+          id: string
+          net_salary: number
+          pay_date: string | null
+          pay_period: string
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          allowances?: number | null
+          basic_salary: number
+          company_id: string
+          created_at?: string | null
+          deductions?: number | null
+          employee_id: string
+          id?: string
+          net_salary: number
+          pay_date?: string | null
+          pay_period: string
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          allowances?: number | null
+          basic_salary?: number
+          company_id?: string
+          created_at?: string | null
+          deductions?: number | null
+          employee_id?: string
+          id?: string
+          net_salary?: number
+          pay_date?: string | null
+          pay_period?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
