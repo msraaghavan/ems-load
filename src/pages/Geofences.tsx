@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { toast } from 'sonner';
+import { useUserRole } from '@/hooks/useUserRole';
+import { useNavigate } from 'react-router-dom';
 import { MapPin, Plus, Trash2 } from 'lucide-react';
 
 // Fix for default marker icon in Leaflet
@@ -29,6 +31,8 @@ interface Geofence {
 
 const Geofences = () => {
   const { user } = useSupabaseAuth();
+  const { isAdmin } = useUserRole();
+  const navigate = useNavigate();
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -42,6 +46,13 @@ const Geofences = () => {
   const map = useRef<L.Map | null>(null);
   const markers = useRef<L.Marker[]>([]);
   const circles = useRef<L.Circle[]>([]);
+
+  // Redirect if not admin
+  useEffect(() => {
+    if (user && !isAdmin) {
+      navigate('/dashboard');
+    }
+  }, [isAdmin, user, navigate]);
 
   useEffect(() => {
     fetchCompanyAndGeofences();

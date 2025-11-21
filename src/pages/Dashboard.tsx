@@ -7,9 +7,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUserRole } from '@/hooks/useUserRole';
 
 export default function Dashboard() {
   const { user } = useSupabaseAuth();
+  const { isAdminOrHR, isDepartmentHead } = useUserRole();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -101,8 +103,12 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-4xl font-extralight tracking-wider">Dashboard</h1>
-        <p className="text-muted-foreground mt-2 font-light tracking-wide">Overview of your workforce</p>
+        <h1 className="text-4xl font-extralight tracking-wider">
+          {isAdminOrHR || isDepartmentHead ? 'Dashboard' : 'My Dashboard'}
+        </h1>
+        <p className="text-muted-foreground mt-2 font-light tracking-wide">
+          {isAdminOrHR || isDepartmentHead ? 'Overview of your workforce' : 'Your work statistics and updates'}
+        </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

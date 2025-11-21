@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface PayrollRecord {
   id: string;
@@ -26,6 +27,7 @@ interface Profile {
 
 export default function Payroll() {
   const { user } = useSupabaseAuth();
+  const { isAdminOrHR } = useUserRole();
   const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
@@ -53,6 +55,8 @@ export default function Payroll() {
         .from('payroll')
         .select('*')
         .eq('company_id', profile.company_id)
+        // If not admin/HR, only fetch own payroll
+        .eq(isAdminOrHR ? 'company_id' : 'user_id', isAdminOrHR ? profile.company_id : user?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -131,13 +135,17 @@ export default function Payroll() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Payroll Management</h1>
-          <p className="text-muted-foreground mt-1">Process and manage employee salaries</p>
+          <h1 className="text-3xl font-bold">{isAdminOrHR ? 'Payroll Management' : 'My Payroll'}</h1>
+          <p className="text-muted-foreground mt-1">
+            {isAdminOrHR ? 'Process and manage employee salaries' : 'View your salary and payment history'}
+          </p>
         </div>
-        <Button className="gap-2">
-          <FileText className="w-4 h-4" />
-          Generate Payslips
-        </Button>
+        {isAdminOrHR && (
+          <Button className="gap-2">
+            <FileText className="w-4 h-4" />
+            Generate Payslips
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">

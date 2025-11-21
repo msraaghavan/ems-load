@@ -27,25 +27,42 @@ import {
 } from '@/components/ui/sidebar';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
+import { useUserRole } from '@/hooks/useUserRole';
 
-const menuItems = [
-  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-  { title: 'Employees', url: '/employees', icon: Users },
-  { title: 'Attendance', url: '/attendance', icon: Clock },
-  { title: 'Leave Requests', url: '/leave', icon: Calendar },
-  { title: 'Payroll', url: '/payroll', icon: DollarSign },
-  { title: 'Performance', url: '/performance', icon: TrendingUp },
-  { title: 'Departments', url: '/departments', icon: Building2 },
-  { title: 'Reports', url: '/reports', icon: FileText },
-  { title: 'Geofences', url: '/geofences', icon: MapPin },
-  { title: 'Invite Codes', url: '/invite-codes', icon: Ticket },
+const allMenuItems = [
+  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'hr', 'department_head', 'employee'] },
+  { title: 'Employees', url: '/employees', icon: Users, roles: ['admin', 'hr', 'department_head'] },
+  { title: 'Attendance', url: '/attendance', icon: Clock, roles: ['admin', 'hr', 'department_head', 'employee'] },
+  { title: 'Leave', url: '/leave', icon: Calendar, roles: ['admin', 'hr', 'department_head', 'employee'] },
+  { title: 'Payroll', url: '/payroll', icon: DollarSign, roles: ['admin', 'hr', 'employee'] },
+  { title: 'Performance', url: '/performance', icon: TrendingUp, roles: ['admin', 'hr', 'department_head', 'employee'] },
+  { title: 'Departments', url: '/departments', icon: Building2, roles: ['admin', 'hr', 'department_head'] },
+  { title: 'Reports', url: '/reports', icon: FileText, roles: ['admin', 'hr'] },
+  { title: 'Geofences', url: '/geofences', icon: MapPin, roles: ['admin'] },
+  { title: 'Invite Codes', url: '/invite-codes', icon: Ticket, roles: ['admin'] },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const { user, signOut } = useSupabaseAuth();
+  const { role, loading: roleLoading } = useUserRole();
   const isCollapsed = state === 'collapsed';
+
+  // Filter menu items based on user role
+  const menuItems = allMenuItems.filter(item => 
+    role && item.roles.includes(role)
+  );
+
+  if (roleLoading) {
+    return (
+      <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+        <SidebarContent className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </SidebarContent>
+      </Sidebar>
+    );
+  }
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
