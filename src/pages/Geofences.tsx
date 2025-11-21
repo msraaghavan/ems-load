@@ -416,11 +416,11 @@ const Geofences = () => {
               Click on the map to set geofence location
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <div 
               ref={mapContainer} 
-              className="w-full h-[500px] rounded-lg border bg-muted/10" 
-              style={{ minHeight: '500px' }}
+              className="w-full rounded-lg overflow-hidden" 
+              style={{ height: '500px', minHeight: '500px', position: 'relative', zIndex: 0 }}
             />
           </CardContent>
         </Card>
