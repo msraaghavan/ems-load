@@ -192,6 +192,7 @@ export type Database = {
           expires_at: string | null
           id: string
           max_uses: number | null
+          role: Database["public"]["Enums"]["app_role"]
         }
         Insert: {
           code: string
@@ -202,6 +203,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           max_uses?: number | null
+          role?: Database["public"]["Enums"]["app_role"]
         }
         Update: {
           code?: string
@@ -212,6 +214,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           max_uses?: number | null
+          role?: Database["public"]["Enums"]["app_role"]
         }
         Relationships: [
           {
