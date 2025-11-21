@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { toast } from 'sonner';
 import { useUserRole } from '@/hooks/useUserRole';
+import { LeaveRequestDialog } from '@/components/LeaveRequestDialog';
 
 interface LeaveRequest {
   id: string;
@@ -167,10 +168,10 @@ export default function Leave() {
             {isAdminOrHR ? 'Manage leave requests and balances' : 'View and apply for leave'}
           </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="w-4 h-4" />
-          Apply for Leave
-        </Button>
+        <LeaveRequestDialog 
+          onSuccess={() => companyId && fetchLeaves(companyId)} 
+          companyId={companyId || ''} 
+        />
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">

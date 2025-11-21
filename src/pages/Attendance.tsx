@@ -6,6 +6,7 @@ import { Clock, Download, Calendar as CalendarIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
+import { AttendanceCheckInDialog } from '@/components/AttendanceCheckInDialog';
 import { toast } from 'sonner';
 
 interface AttendanceRecord {
@@ -139,6 +140,10 @@ export default function Attendance() {
           </p>
         </div>
         <div className="flex gap-2">
+          <AttendanceCheckInDialog 
+            onSuccess={() => companyId && fetchAttendance(companyId)} 
+            companyId={companyId || ''} 
+          />
           {(isAdminOrHR || isDepartmentHead) && (
             <>
               <Button variant="outline" className="gap-2 font-light tracking-wide">
