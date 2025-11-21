@@ -28,9 +28,13 @@ serve(async (req) => {
       throw new Error('Not authenticated');
     }
 
-    const { code } = await req.json();
+    const { code, facePhoto } = await req.json();
 
     console.log('User attempting to join with code:', code);
+
+    if (!facePhoto) {
+      throw new Error('Face photo is required for security verification');
+    }
 
     // Get invite code
     const { data: inviteCode, error: inviteError } = await supabaseClient
@@ -88,6 +92,24 @@ serve(async (req) => {
     if (profileError) {
       console.error('Error updating profile:', profileError);
       throw profileError;
+    }
+
+    // Store face photo for attendance verification
+    const { error: photoError } = await supabaseClient
+      .from('attendance_photos')
+      .insert({
+        user_id: user.id,
+        company_id: inviteCode.company_id,
+        photo_url: facePhoto,
+        is_primary: true,
+      });
+
+    if (photoError) {
+      console.error('Error saving face photo:', photoError);
+      // Don't throw - allow user to join but log the error
+      console.log('User joined but face photo was not saved');
+    } else {
+      console.log('Face photo saved successfully for future attendance verification');
     }
 
     // Increment current_uses
