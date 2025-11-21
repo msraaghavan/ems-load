@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { toast } from 'sonner';
 import { MapPin, Plus, Trash2 } from 'lucide-react';
+
+// Fix for default marker icon in Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 interface Geofence {
   id: string;
@@ -30,20 +38,32 @@ const Geofences = () => {
     longitude: 0,
     radius_meters: 100
   });
-  const [mapboxToken, setMapboxToken] = useState('');
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markers = useRef<mapboxgl.Marker[]>([]);
+  const map = useRef<L.Map | null>(null);
+  const markers = useRef<L.Marker[]>([]);
+  const circles = useRef<L.Circle[]>([]);
 
   useEffect(() => {
     fetchCompanyAndGeofences();
   }, [user]);
 
   useEffect(() => {
-    if (mapboxToken && mapContainer.current && !map.current) {
+    if (mapContainer.current && !map.current) {
       initializeMap();
     }
-  }, [mapboxToken]);
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (map.current && geofences.length > 0) {
+      updateMapMarkers(geofences);
+    }
+  }, [geofences]);
 
   const fetchCompanyAndGeofences = async () => {
     if (!user) return;
@@ -79,68 +99,114 @@ const Geofences = () => {
     }
 
     setGeofences(data || []);
-    if (data && data.length > 0 && map.current) {
-      updateMapMarkers(data);
-    }
   };
 
   const initializeMap = () => {
-    if (!mapContainer.current) return;
+    if (!mapContainer.current || map.current) return;
 
-    mapboxgl.accessToken = mapboxToken;
+    // Initialize map with OpenStreetMap tiles
+    map.current = L.map(mapContainer.current).setView([0, 0], 2);
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [0, 0],
-      zoom: 2
-    });
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(map.current);
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-    map.current.on('click', (e) => {
+    // Add click event to set geofence location
+    map.current.on('click', (e: L.LeafletMouseEvent) => {
       setNewGeofence(prev => ({
         ...prev,
-        latitude: e.lngLat.lat,
-        longitude: e.lngLat.lng
+        latitude: e.latlng.lat,
+        longitude: e.latlng.lng
       }));
+      
+      // Add temporary marker
+      if (map.current) {
+        markers.current.forEach(m => m.remove());
+        circles.current.forEach(c => c.remove());
+        
+        const tempMarker = L.marker([e.latlng.lat, e.latlng.lng], {
+          icon: L.icon({
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+          })
+        }).addTo(map.current);
+        
+        const tempCircle = L.circle([e.latlng.lat, e.latlng.lng], {
+          radius: newGeofence.radius_meters,
+          color: '#8B5CF6',
+          fillColor: '#8B5CF6',
+          fillOpacity: 0.2
+        }).addTo(map.current);
+        
+        markers.current = [...markers.current, tempMarker];
+        circles.current = [...circles.current, tempCircle];
+        
+        // Update existing geofence markers
+        geofences.forEach(geofence => {
+          const marker = L.marker([geofence.latitude, geofence.longitude]).addTo(map.current!);
+          marker.bindPopup(`<strong>${geofence.name}</strong><br/>Radius: ${geofence.radius_meters}m`);
+          
+          const circle = L.circle([geofence.latitude, geofence.longitude], {
+            radius: geofence.radius_meters,
+            color: '#3B82F6',
+            fillColor: '#3B82F6',
+            fillOpacity: 0.2
+          }).addTo(map.current!);
+          
+          markers.current.push(marker);
+          circles.current.push(circle);
+        });
+      }
     });
-
-    if (geofences.length > 0) {
-      updateMapMarkers(geofences);
-    }
   };
 
   const updateMapMarkers = (geofenceList: Geofence[]) => {
     if (!map.current) return;
 
+    // Clear existing markers and circles
     markers.current.forEach(marker => marker.remove());
+    circles.current.forEach(circle => circle.remove());
     markers.current = [];
+    circles.current = [];
 
+    // Add markers and circles for each geofence
     geofenceList.forEach(geofence => {
-      const marker = new mapboxgl.Marker({ color: '#8B5CF6' })
-        .setLngLat([geofence.longitude, geofence.latitude])
-        .setPopup(
-          new mapboxgl.Popup().setHTML(
-            `<strong>${geofence.name}</strong><br/>Radius: ${geofence.radius_meters}m`
-          )
-        )
-        .addTo(map.current!);
-
+      const marker = L.marker([geofence.latitude, geofence.longitude]).addTo(map.current!);
+      marker.bindPopup(`<strong>${geofence.name}</strong><br/>Radius: ${geofence.radius_meters}m`);
+      
+      const circle = L.circle([geofence.latitude, geofence.longitude], {
+        radius: geofence.radius_meters,
+        color: '#8B5CF6',
+        fillColor: '#8B5CF6',
+        fillOpacity: 0.2
+      }).addTo(map.current!);
+      
       markers.current.push(marker);
+      circles.current.push(circle);
     });
 
+    // Fit map to show all geofences
     if (geofenceList.length > 0) {
-      map.current.flyTo({
-        center: [geofenceList[0].longitude, geofenceList[0].latitude],
-        zoom: 15
-      });
+      const bounds = L.latLngBounds(
+        geofenceList.map(g => [g.latitude, g.longitude] as [number, number])
+      );
+      map.current.fitBounds(bounds, { padding: [50, 50] });
     }
   };
 
   const handleCreateGeofence = async () => {
     if (!companyId || !newGeofence.name) {
       toast.error('Please provide a name and select location on map');
+      return;
+    }
+
+    if (newGeofence.latitude === 0 && newGeofence.longitude === 0) {
+      toast.error('Please click on the map to set a location');
       return;
     }
 
@@ -158,6 +224,13 @@ const Geofences = () => {
 
     toast.success('Geofence created successfully');
     setNewGeofence({ name: '', latitude: 0, longitude: 0, radius_meters: 100 });
+    
+    // Clear temporary markers
+    markers.current.forEach(m => m.remove());
+    circles.current.forEach(c => c.remove());
+    markers.current = [];
+    circles.current = [];
+    
     fetchGeofences(companyId);
   };
 
@@ -184,50 +257,12 @@ const Geofences = () => {
     );
   }
 
-  if (!mapboxToken) {
-    return (
-      <div className="max-w-2xl mx-auto p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-light tracking-wide">Mapbox Token Required</CardTitle>
-            <CardDescription className="font-light">
-              Enter your Mapbox public token to use the map interface
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="mapbox-token" className="font-light">Mapbox Public Token</Label>
-              <Input
-                id="mapbox-token"
-                type="text"
-                placeholder="pk.eyJ1..."
-                onChange={(e) => setMapboxToken(e.target.value)}
-                className="font-light"
-              />
-              <p className="text-xs text-muted-foreground mt-2 font-light">
-                Get your token from{' '}
-                <a
-                  href="https://account.mapbox.com/access-tokens/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  mapbox.com
-                </a>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-4xl font-extralight tracking-wider text-foreground mb-2">Geofence Setup</h1>
         <p className="text-muted-foreground font-light tracking-wide">
-          Set office boundaries for attendance verification
+          Set office boundaries for attendance verification using OpenStreetMap
         </p>
       </div>
 
@@ -243,7 +278,7 @@ const Geofences = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div ref={mapContainer} className="w-full h-[500px] rounded-lg" />
+            <div ref={mapContainer} className="w-full h-[500px] rounded-lg border" />
           </CardContent>
         </Card>
 
@@ -272,7 +307,26 @@ const Geofences = () => {
                   id="radius"
                   type="number"
                   value={newGeofence.radius_meters}
-                  onChange={(e) => setNewGeofence(prev => ({ ...prev, radius_meters: parseInt(e.target.value) }))}
+                  onChange={(e) => {
+                    const radius = parseInt(e.target.value) || 100;
+                    setNewGeofence(prev => ({ ...prev, radius_meters: radius }));
+                    
+                    // Update circle radius if exists
+                    if (circles.current.length > 0 && map.current) {
+                      circles.current.forEach(c => c.remove());
+                      circles.current = [];
+                      
+                      if (newGeofence.latitude !== 0 || newGeofence.longitude !== 0) {
+                        const circle = L.circle([newGeofence.latitude, newGeofence.longitude], {
+                          radius: radius,
+                          color: '#8B5CF6',
+                          fillColor: '#8B5CF6',
+                          fillOpacity: 0.2
+                        }).addTo(map.current);
+                        circles.current.push(circle);
+                      }
+                    }
+                  }}
                   className="font-light"
                 />
               </div>
@@ -280,7 +334,7 @@ const Geofences = () => {
                 <div>
                   <Label className="font-light text-xs">Latitude</Label>
                   <Input
-                    value={newGeofence.latitude.toFixed(6)}
+                    value={newGeofence.latitude === 0 ? 'Click map' : newGeofence.latitude.toFixed(6)}
                     readOnly
                     className="font-light text-xs"
                   />
@@ -288,7 +342,7 @@ const Geofences = () => {
                 <div>
                   <Label className="font-light text-xs">Longitude</Label>
                   <Input
-                    value={newGeofence.longitude.toFixed(6)}
+                    value={newGeofence.longitude === 0 ? 'Click map' : newGeofence.longitude.toFixed(6)}
                     readOnly
                     className="font-light text-xs"
                   />
